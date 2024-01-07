@@ -4,7 +4,7 @@ const path = require("path");
 const mongoose = require("mongoose");
 const session = require("express-session");
 const flash = require("connect-flash");
-require('dotenv').config();
+require("dotenv").config();
 // const Campground = require("./models/campground");
 const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
@@ -17,6 +17,7 @@ const passport = require("passport");
 const localStrategy = require("passport-local");
 const User = require("./models/user");
 const userRoutes = require("./routes/user");
+const MongoStore = require("connect-mongo");
 const dbURL = process.env.MONGODB_URL;
 
 main()
@@ -31,6 +32,16 @@ main()
 async function main() {
   await mongoose.connect(dbURL);
 }
+const store = MongoStore.create({
+  mongoUrl: dbURL,
+  touchAfter: 24 * 60 * 60,
+  crypto: {
+    secret: "thisshouldbeabettersecret!",
+  },
+});
+store.on("error", function (e) {
+  console.log("MONGO STORE ERROR!", e);
+});
 
 const sessionConfig = {
   secret: "thisismysecretshabbir",
@@ -41,6 +52,7 @@ const sessionConfig = {
     maxAge: 1000 * 60 * 60 * 24 * 7,
     httpOnly: true,
   },
+  store,
 };
 app.use(session(sessionConfig));
 app.use(flash());
